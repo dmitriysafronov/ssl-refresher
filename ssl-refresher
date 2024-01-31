@@ -1,0 +1,90 @@
+#!/usr/bin/env bash
+
+LOGGER="logger -t ssl-refresher -s"
+CONF_DIR="/etc/opt/ssl-refresher"
+
+########################
+
+die() {
+  ${LOGGER} "$@"
+  exit 1
+}
+
+check_replace_certs() {
+  local CERT_NEW="$1"
+  local CERT_OLD="$2"
+  if [[ ! -f ${CERT_OLD} || -n "$(diff -q ${CERT_OLD} ${CERT_NEW})" ]]; then
+      cp -f "${CERT_NEW}" "${CERT_OLD}"
+      RESTART_SERVICES=1
+  fi
+}
+
+########################
+
+if [ "$(id -u)" -ne 0 ]; then
+  die "Please run as root"
+fi
+
+########################
+
+RESTART_SERVICES=0
+DIE=0
+
+########################
+
+if [[ ! -f "${CONF_DIR}/secret" ]]; then
+  echo "No secret file [${CONF_DIR}/secret] found!"
+  DIE=1
+fi
+
+if [[ ! -f "${CONF_DIR}/config" ]]; then
+  ${LOGGER} "No config file [${CONF_DIR}/config] found!"
+  DIE=1
+fi
+
+source "${CONF_DIR}/config"
+
+########################
+
+if [[ -z "${REMOTE_SERVER}" ]]; then
+  ${LOGGER} "REMOTE_SERVER is not specified in config file!"
+  DIE=1
+fi
+
+if [[ -z "${REMOTE_USER}" ]]; then
+  ${LOGGER} "REMOTE_USER is not specified in config file!"
+  DIE=1
+fi
+
+if [[ -z "${REMOTE_DIR}" ]]; then
+  ${LOGGER} "REMOTE_DIR is not specified in config file!"
+  DIE=1
+fi
+
+########################
+
+if [[ "${DIE}" == 1 ]]; then
+  die "Errors were found! Exiting... Refer to [${CONF_DIR}] for additional configuration."
+fi
+
+########################
+
+WORK_DIR="$(mktemp -d)"
+mkdir -p "/opt/ssl/"
+
+"${RSYNC_COMMAND:-rsync}" -aL --password-file="${CONF_DIR}/secret" rsync://"${REMOTE_USER}"@"${REMOTE_SERVER}"/"${REMOTE_DIR}/" "${WORK_DIR}/" || die "Could not rsync"
+
+check_replace_certs "${WORK_DIR}/chain.pem" "/opt/ssl/chain.pem"
+check_replace_certs "${WORK_DIR}/fullchain.pem" "/opt/ssl/fullchain.pem"
+check_replace_certs "${WORK_DIR}/cert.pem" "/opt/ssl/cert.pem"
+check_replace_certs "${WORK_DIR}/privkey.pem" "/opt/ssl/privkey.pem"
+
+chmod -R a+rX "/opt/ssl/"
+rm -rf "${WORK_DIR}/"
+
+########################
+
+if [[ "$RESTART_SERVICES" == 1 ]]; then
+    ${LOGGER} "SSL files were changed..."
+    "${CONF_DIR}/success" &
+fi
