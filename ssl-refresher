@@ -80,7 +80,7 @@ check_replace_certs "${WORK_DIR}/cert.pem" "/opt/ssl/cert.pem"
 check_replace_certs "${WORK_DIR}/privkey.pem" "/opt/ssl/privkey.pem"
 
 chmod -R a+rX "/opt/ssl/"
-rm -rf "${WORK_DIR}/"
+rm -rf "${WORK_DIR:?}/"
 
 ########################
 

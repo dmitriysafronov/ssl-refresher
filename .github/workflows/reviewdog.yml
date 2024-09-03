@@ -7,10 +7,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: shellcheck
-        uses: reviewdog/action-shellcheck@v1
+        uses: reviewdog/action-shellcheck@v1.26.0
         with:
-          github_token: ${{ secrets.github_token }}
+          github_token: ${{ secrets.PAT }}
           reporter: github-pr-review
           fail_on_error: true
+          level: warning
           path: "."
           pattern: "ssl-refresher"
