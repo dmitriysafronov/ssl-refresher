@@ -72,7 +72,7 @@ fi
 WORK_DIR="$(mktemp -d)"
 mkdir -p "/opt/ssl/"
 
-"${RSYNC_COMMAND:-rsync}" -aL --password-file="${CONF_DIR}/secret" rsync://"${REMOTE_USER}"@"${REMOTE_SERVER}"/"${REMOTE_DIR}/" "${WORK_DIR}/" || die "Could not rsync"
+"${RSYNC_COMMAND:-rsync}" -aL --password-file="${CONF_DIR}/secret" rsync://"${REMOTE_USER}"@"${REMOTE_SERVER}"/"${REMOTE_DIR}/" "${WORK_DIR}/" 2> /dev/null || die "Could not rsync"
 
 check_replace_certs "${WORK_DIR}/chain.pem" "/opt/ssl/chain.pem"
 check_replace_certs "${WORK_DIR}/fullchain.pem" "/opt/ssl/fullchain.pem"
