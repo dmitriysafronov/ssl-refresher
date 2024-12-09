@@ -7,7 +7,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: shellcheck
-        uses: reviewdog/action-shellcheck@v1.27.0
+        uses: reviewdog/action-shellcheck@v1.28.0
         with:
           github_token: ${{ secrets.PAT }}
           reporter: github-pr-review
