@@ -9,9 +9,8 @@ jobs:
       - name: shellcheck
         uses: reviewdog/action-shellcheck@v1.29.0
         with:
-          github_token: ${{ secrets.PAT }}
+          github_token: ${{ secrets.github_token }}
           reporter: github-pr-review
           fail_on_error: true
-          level: warning
           path: "."
           pattern: "ssl-refresher"
